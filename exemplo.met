@@ -1,0 +1,3 @@
+id INTEGER
+nome VARCHAR 20
+empresa VARCHAR 40

@@ -1,0 +1,4 @@
+id INTEGER
+nome VARCHAR 20
+instituicao VARCHAR 20
+telefone VARCHAR 11

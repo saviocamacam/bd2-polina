@@ -1,0 +1,3 @@
+id INTEGER
+tipo VARCHAR 10
+dataFinal VARCHAR 10

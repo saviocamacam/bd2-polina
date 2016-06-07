@@ -1,0 +1,3 @@
+id INTEGER
+nome VARCHAR 25
+professor VARCHAR 25
