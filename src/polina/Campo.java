@@ -4,6 +4,12 @@ public class Campo {
 	private String nomeCampo;
 	private String tipo;
 	private int tamanho;
+	private String value;
+	private int offBase;
+	
+	public Campo(String nomeCampo) {
+		this.nomeCampo = nomeCampo;
+	}
 	
 	public Campo(String nomeCampo, String tipo) {
 		this.nomeCampo = nomeCampo;
@@ -23,6 +29,13 @@ public class Campo {
 	public String getTipo() {
 		return tipo;
 	}
+	public String getTipo(String nomeCampo) {
+		if(nomeCampo.equals(nomeCampo))
+			return tipo;
+		else
+			return null;
+	}
+	
 	public void setTipo(String tipo) {
 		this.tipo = tipo;
 	}
@@ -35,10 +48,49 @@ public class Campo {
 	@Override
 	public String toString() {
 		if(tamanho == 0) {
-			return nomeCampo + " " + tipo +"\n";
+			return nomeCampo + " " + tipo + " " + offBase + "\n";
 		}
 		else
-			return nomeCampo + " " + tipo + " " + tamanho + "\n";
+			return nomeCampo + " " + tipo + " " + tamanho + " " + offBase + "\n";
 	}
+	
+	public Integer getIntegerValue() {
+		return Integer.valueOf(value);
+	}
+	
+	public String getStringValue() {
+		return value;
+	}
+	
+	public boolean getBooleanValue() {
+		return Boolean.valueOf(value);
+	}
+	public String getCharValue() {
+		return value;
+	}
+	
+	public int getLenValue() {
+		return value.length();
+	}
+	
+	public void setValue(String value) {
+		this.value = value;
+	}
+	@Override
+	public boolean equals(Object o) {
+		return this.nomeCampo.equals(((Campo) o).getNomeCampo());
+	}
+
+	public String getValue() {
+		return value;
+	}
+
+	public void setOffBase(int offBase) {
+		this.offBase = offBase;
+	}
+	public int getOffBase() {
+		return this.offBase;
+	}
+	
 	
 }

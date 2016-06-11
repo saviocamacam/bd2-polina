@@ -1,4 +1,9 @@
-id INTEGER
-nome VARCHAR 20
-instituicao VARCHAR 20
-telefone VARCHAR 11
+id INTEGER 16
+nome VARCHAR 20 16
+instituicao VARCHAR 20 16
+cidade VARCHAR 20 16
+fundacao INTEGER 20
+estadoCurso BOOLEAN 21
+duracao INTEGER 25
+validacao BOOLEAN 26
+coordernador CHAR 20 46

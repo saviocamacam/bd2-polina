@@ -129,6 +129,10 @@ public class Arquivo {
 	
 	public static Metadado lerArquivoMet(String nomeArquivo) {
 		List<String> linhas = new ArrayList<>();
+		int quantidadeVarchar = 0;
+		int quantidadeInt = 0;
+		int quantidadeChar = 0;
+		int quantidadeBool = 0;
 		try {
 			linhas = Files.readAllLines(Paths.get(nomeArquivo+".met", ""));
 		} catch (IOException e) {
@@ -138,8 +142,27 @@ public class Arquivo {
 		for(String s : linhas) {
 			String[] vetS = s.split(" ");
 			novoGerenciador.adicionarCampos(vetS);
+			
 		}
-		return new Metadado(nomeArquivo, novoGerenciador.getListaCampos());
+		for(Campo campo : novoGerenciador.getListaCampos()) {
+			if(campo.getTipo().equals("VARCHAR"))
+				quantidadeVarchar += 4;
+			else if(campo.getTipo().equals("INTEGER"))
+				quantidadeInt += 4;
+			else if(campo.getTipo().equals("CHAR"))
+				quantidadeChar += campo.getTamanho();
+			else if(campo.getTipo().equals("BOOLEAN"))
+				quantidadeBool += 1;
+			
+		}
+		
+		Metadado metaDado = new Metadado(nomeArquivo, novoGerenciador.getListaCampos());
+		metaDado.setQuantidadeVarchar(quantidadeVarchar);
+		metaDado.setQuantidadeInt(quantidadeInt);
+		metaDado.setQuantidadeChar(quantidadeChar);
+		metaDado.setQuantidadeBool(quantidadeBool);
+		metaDado.setQuantidadeTotal(quantidadeInt + quantidadeChar + quantidadeVarchar + quantidadeBool);
+		return metaDado;
 	}
 	
 	public static void escreverArquivoMet(Metadado meta) {
@@ -178,7 +201,7 @@ public class Arquivo {
 		ArquivoBinario arquivoBinario = new ArquivoBinario(meta.getNomeArquivo(), 2000);
 		OutputStream output = null;
 		try {
-			output = new BufferedOutputStream(new FileOutputStream(meta.getNomeArquivo()+".txt"));
+			output = new BufferedOutputStream(new FileOutputStream(meta.getNomeArquivo()));
 			output.write(arquivoBinario.getContent());
 			output.close();
 		} catch (FileNotFoundException e) {
@@ -188,7 +211,7 @@ public class Arquivo {
 		}
 	}
 
-	public void escreverAquivoBin(byte[] content, String nomeArquivo) {
+	public static void escreverAquivoBin(byte[] content, String nomeArquivo) {
 		try	{
 			OutputStream output = null;
 			try {
@@ -244,6 +267,91 @@ public class Arquivo {
 			System.out.println(ex);
 		}
 		return result.toByteArray();
+	}
+
+	public static void escreverInserts(GerenciadorInsert gerenciadorInsert) {
+		LinkedList<GerenciadorInsert> conjuntoGerenciadores = new LinkedList<>();
+		LinkedList<Insert> insertBruto = new LinkedList<>();
+		
+		for(Insert insert : gerenciadorInsert.extrairInsert()) {
+			insertBruto.add(insert);
+		}
+		
+		LinkedList<Metadado> conjuntoMeta = gerenciadorInsert.getListaMeta();
+		while(!conjuntoMeta.isEmpty()) {
+			GerenciadorInsert gerenciador = new GerenciadorInsert();
+			gerenciador.addMeta(conjuntoMeta.removeFirst());
+			conjuntoGerenciadores.add(gerenciador);
+		}
+		
+		int i = 0;
+		/*while(i < conjuntoGerenciadores.size()) {
+			if(insertBruto.getFirst().getNomeArquivo().equals(conjuntoGerenciadores.get(i))) {
+				
+			}
+			else
+				i++;
+		}*/
+		
+		
+		while(!insertBruto.isEmpty()) {
+			if(conjuntoGerenciadores.get(i).primeiroMeta().getNomeArquivo().equals(insertBruto.peek().getNomeArquivo())) {
+				conjuntoGerenciadores.get(i).addInsert(insertBruto.removeFirst());
+			} else
+				i++;
+		}
+		
+		while(!conjuntoGerenciadores.isEmpty()) {
+			LinkedList<Offiset> listaOffset = new LinkedList<>();
+			GerenciadorInsert gerenciador = conjuntoGerenciadores.removeFirst();
+			
+			byte[] arquivoBinario = Arquivo.lerArquivoBin(gerenciador.getListaMeta().peek().getNomeArquivo());
+			
+			CabecalhoArquivo cabecalho = new CabecalhoArquivo(arquivoBinario);
+			int iterator = 0;
+			
+			LinkedList<ByteArrayOutputStream> listaTemp = new LinkedList<>();
+			ByteArrayOutputStream bufferInsert = new ByteArrayOutputStream();
+			ByteArrayOutputStream bufferArquivo = new ByteArrayOutputStream();
+			
+			while(!gerenciador.getListaInsert().isEmpty()) {
+				int tamOff = cabecalho.getPrimeiroLivre() - gerenciador.getListaInsert().peek().getListaContentsSerialized().length;
+				Offiset offset = new Offiset((short) tamOff);
+				//offset.setOffisetSerialized(Serializer.toShortByteArray(ca));
+				listaOffset.add(offset);
+				cabecalho.setPrimeiroLivre((short)(tamOff));
+				try {
+					ByteArrayOutputStream bufferTemp = new ByteArrayOutputStream();
+					bufferTemp.write(gerenciador.getListaInsert().removeFirst().getListaContentsSerialized());
+					listaTemp.add(bufferTemp);
+					
+					iterator++;
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			for(i=listaTemp.size()-1 ; i>=0 ; i-- ) {
+				try {
+					bufferInsert.write(listaTemp.get(i).toByteArray());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			iterator += cabecalho.getRegistros();
+			cabecalho.setRegistros((short)iterator);
+			cabecalho.setDeslocamentoArquivos(listaOffset);
+			try {
+				bufferArquivo.write(cabecalho.getDadosSerializados());
+				byte[] livres = new byte[2000 - (cabecalho.getDadosSerializados().length + bufferInsert.toByteArray().length)];
+				bufferArquivo.write(livres);
+				bufferArquivo.write(bufferInsert.toByteArray());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			Arquivo.escreverAquivoBin(bufferArquivo.toByteArray(), gerenciador.getListaMeta().peek().getNomeArquivo());
+		}
 	}
 		  
 		 

@@ -1,7 +1,12 @@
 CREATE TABLE curso(
-    id INTEGER, 
-    nome VARCHAR(20), 
+    id INTEGER,
+    nome VARCHAR(20),
     instituicao VARCHAR(20), 
-    telefone VARCHAR(11));
-CREATE TABLE materia(id INTEGER, nome VARCHAR(25), professor VARCHAR(25));
+    cidade VARCHAR(20)
+    fundacao INTEGER,
+    estadoCurso BOOLEAN,
+    duracao INTEGER,
+    validacao BOOLEAN,
+    coordernador CHAR(20)); 
+CREATE TABLE materia(id INTEGER, nome CHAR(25), professor VARCHAR(25));
 CREATE TABLE tarefa(id INTEGER, tipo VARCHAR(10), dataFinal VARCHAR(10));

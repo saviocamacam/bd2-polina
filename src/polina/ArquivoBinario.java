@@ -28,7 +28,7 @@ public class ArquivoBinario {
 
 	public void setContent(byte[] content) {
 		this.content = content;
-		
+		this.cabecalho = new CabecalhoArquivo(content);
 	}
 
 	public CabecalhoArquivo getCabecalho() {
