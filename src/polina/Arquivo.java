@@ -127,6 +127,47 @@ public class Arquivo {
 		return retornaInserts;
 	}
 	
+	public static LinkedList<String> lerArquivoDelete(String nomeArquivo) {
+		LinkedList<String> retornaDeletes = new LinkedList<>();
+		List<String> linhas = new ArrayList<>();
+		String delete = new String("DELETE");
+		String from = new String("FROM");
+		String where = new String("WHERE");
+		
+		try {
+			linhas = Files.readAllLines(Paths.get(nomeArquivo + ".sql", ""));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		int i = 0;
+		String temp = new String();
+		for(String s : linhas) {
+			String[] piecesBreaked = s.split("[[,][ ][(][)][;]]");
+			for(String piece : piecesBreaked) {
+				if(!piece.equals(delete) && !piece.equals(from)) {
+					if(piece.equals(where)) {
+						temp = temp.concat("|");
+					}
+					else temp = temp.concat(piece+ " ");
+				}
+			}
+			if(i+1 != linhas.size()) {
+				String[] nextPiece = linhas.get(i+1).split("[[,][ ][(][)][;]]");
+				if(nextPiece[0].equals(delete)) {
+					retornaDeletes.add(temp);
+					temp = new String();
+				}
+				i++;
+			}
+			else {
+				retornaDeletes.add(temp);
+			}
+			
+		}		
+		return retornaDeletes;
+	}
+	
 	public static Metadado lerArquivoMet(String nomeArquivo) {
 		List<String> linhas = new ArrayList<>();
 		int quantidadeVarchar = 0;
@@ -269,7 +310,7 @@ public class Arquivo {
 		return result.toByteArray();
 	}
 
-	public static void escreverInserts(GerenciadorInsert gerenciadorInsert) {
+	public static boolean escreverInserts(GerenciadorInsert gerenciadorInsert) {
 		LinkedList<GerenciadorInsert> conjuntoGerenciadores = new LinkedList<>();
 		LinkedList<Insert> insertBruto = new LinkedList<>();
 		
@@ -310,6 +351,8 @@ public class Arquivo {
 			CabecalhoArquivo cabecalho = new CabecalhoArquivo(arquivoBinario);
 			int iterator = 0;
 			
+			byte[] conteudoAnterior = getRegistroSerializado(cabecalho.getPrimeiroLivre(), arquivoBinario, 2000);
+			
 			LinkedList<ByteArrayOutputStream> listaTemp = new LinkedList<>();
 			ByteArrayOutputStream bufferInsert = new ByteArrayOutputStream();
 			ByteArrayOutputStream bufferArquivo = new ByteArrayOutputStream();
@@ -343,15 +386,183 @@ public class Arquivo {
 			cabecalho.setDeslocamentoArquivos(listaOffset);
 			try {
 				bufferArquivo.write(cabecalho.getDadosSerializados());
-				byte[] livres = new byte[2000 - (cabecalho.getDadosSerializados().length + bufferInsert.toByteArray().length)];
-				bufferArquivo.write(livres);
-				bufferArquivo.write(bufferInsert.toByteArray());
+				int tam = 2000 - (cabecalho.getDadosSerializados().length + bufferInsert.toByteArray().length + conteudoAnterior.length);
+				if(tam < 0) {
+					return false;
+				}else {
+					byte[] livres = new byte[2000 - (cabecalho.getDadosSerializados().length + bufferInsert.toByteArray().length + conteudoAnterior.length)];
+					bufferArquivo.write(livres);
+					bufferArquivo.write(bufferInsert.toByteArray());
+					bufferArquivo.write(conteudoAnterior);
+				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			Arquivo.escreverAquivoBin(bufferArquivo.toByteArray(), gerenciador.getListaMeta().peek().getNomeArquivo());
 		}
+		return true;
+	}
+	
+	private static byte[] getRegistroSerializado(int aPartir, byte[] arquivoBinario, int tamanho) {
+		byte[] registros = new byte[tamanho-aPartir];
+		int i=aPartir;
+		int j=0;
+		for(j=0 ; j < tamanho-aPartir; j++) {
+			registros[j] = arquivoBinario[i];
+			i++;
+		}
+		return registros;
+	}
+	
+	public static boolean executarDeletes(GerenciadorDelete gerenciadorDelete) {
+		int deletesSucesso = 0;
+		LinkedList<GerenciadorDelete> conjuntoGerenciadoresDeletes = new LinkedList<>();
+		LinkedList<Delete> deleteBruto = new LinkedList<>();
+		
+		for(Delete delete: gerenciadorDelete.extrairDeletes()) {
+			deleteBruto.add(delete);
+		}
+		
+		LinkedList<Metadado> conjuntoMeta = gerenciadorDelete.getListaMeta();
+		
+		while(!conjuntoMeta.isEmpty()) {
+			GerenciadorDelete gerenciador = new GerenciadorDelete();
+			gerenciador.addMeta(conjuntoMeta.removeFirst());
+			conjuntoGerenciadoresDeletes.add(gerenciador);
+		}
+		
+		int i = 0;
+		
+		while(!deleteBruto.isEmpty()) {
+			if(conjuntoGerenciadoresDeletes.get(i).primeiroMeta().getNomeArquivo().equals(deleteBruto.peek().getNomeArquivo())) {
+				conjuntoGerenciadoresDeletes.get(i).addDelete(deleteBruto.removeFirst());
+			} else
+				i++;
+		}
+		
+		while(!conjuntoGerenciadoresDeletes.isEmpty()) {
+			int deletesFromLocalManager = 0;
+			GerenciadorDelete gerenciador = conjuntoGerenciadoresDeletes.removeFirst();
+			Metadado metadado = gerenciador.primeiroMeta();
+			byte[] arquivoBinario = Arquivo.lerArquivoBin(gerenciador.getListaMeta().peek().getNomeArquivo());
+			ArquivoBinario arquivoRecuperado = new ArquivoBinario(metadado.getNomeArquivo());
+			arquivoRecuperado.setContent(arquivoBinario);
+			
+			CabecalhoArquivo cabecalho = new CabecalhoArquivo(arquivoBinario);
+			//arquivoRecuperado.setCabecalho(cabecalho);
+			
+			GerenciadorInsert gerenciadorInsert = new GerenciadorInsert();
+			gerenciadorInsert.addMeta(metadado);
+			LinkedList<Insert> insertRecuperado = gerenciadorInsert.recuperaInsert(arquivoRecuperado);
+			
+			while(!cabecalho.getDeslocamentoArquivos().isEmpty()) {
+				Offiset off = cabecalho.getDeslocamentoArquivos().peek();
+				Insert insert = insertRecuperado.peek();
+				Delete delete = gerenciador.getListaDelete().peek();
+				Campo compare = insert.getCampoNome(delete.getCampo().getNomeCampo());
+				
+				String tipo = metadado.getNomeTipo(delete.getCampo().getNomeCampo());
+				
+				if(delete.getCampo().getOperator().equals("=")) {
+					if(tipo.equals("VARCHAR")) {
+						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) == 0) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+					else if(tipo.equals("INTEGER")) {
+						
+					}
+					else if(tipo.equals("BOOLEAN")) {
+						
+					}
+					else if(tipo.equals("CHAR")) {
+						
+					}
+				}
+				else if (delete.getCampo().getOperator().equals("!=")) {
+					if(tipo.equals("VARCHAR")) {
+						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) != 0) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+				}
+				else if (delete.getCampo().getOperator().equals(">")) {
+					if(tipo.equals("VARCHAR")) {
+						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) > 0) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+				}
+				else if (delete.getCampo().getOperator().equals("<")) {
+					if(tipo.equals("VARCHAR")) {
+						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) < 0) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+				}
+				
+			}
+			cabecalho.serializarDadosFixos();
+			
+			LinkedList<ByteArrayOutputStream> listaTemp = new LinkedList<>();
+			ByteArrayOutputStream bufferInsert = new ByteArrayOutputStream();
+			ByteArrayOutputStream bufferArquivo = new ByteArrayOutputStream();
+			
+			while(!insertRecuperado.isEmpty()) {
+				int tamOff = cabecalho.getPrimeiroLivre() - insertRecuperado.peek().getListaContentsSerialized().length;
+				Offiset offset = new Offiset((short) tamOff);
+				//listaOffset.add(offset);
+				cabecalho.setPrimeiroLivre((short)(tamOff));
+				try {
+					ByteArrayOutputStream bufferTemp = new ByteArrayOutputStream();
+					bufferTemp.write(insertRecuperado.removeFirst().getListaContentsSerialized());
+					listaTemp.add(bufferTemp);
+					
+					//iterator++;
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			for(i=listaTemp.size()-1 ; i>=0 ; i-- ) {
+				try {
+					bufferInsert.write(listaTemp.get(i).toByteArray());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			
+			try {
+				bufferArquivo.write(cabecalho.getDadosSerializados());
+				int tam = 2000 - (cabecalho.getDadosSerializados().length + bufferInsert.toByteArray().length);
+				byte[] livres = new byte[tam];
+				bufferArquivo.write(livres);
+				bufferArquivo.write(bufferInsert.toByteArray());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			Arquivo.escreverAquivoBin(bufferArquivo.toByteArray(), gerenciador.getListaMeta().peek().getNomeArquivo());
+			
+		}
+		if(deletesSucesso <= 0) {
+			return false;
+		}
+		else
+			return true;
 	}
 		  
 		 

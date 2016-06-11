@@ -9,6 +9,7 @@ public class Polina {
 	public static Scanner scanner;
 	public static GerenciadorMetadados gerenciadorMeta;
 	public static GerenciadorInsert gerenciadorInsert;
+	public static GerenciadorDelete gerenciadorDelete;
 	
 	public static void main(String[] args) {
 		do{
@@ -20,38 +21,44 @@ public class Polina {
 				//nomeArquivo = scanner.next();
 				gerenciadorMeta = new GerenciadorMetadados(Arquivo.lerArquivoCreate("create"));
 				Arquivo.escreverGerenciador(gerenciadorMeta);
-				/*byte[] testeb = null;
-				Teste teste = new Teste(10, 20, 30, 40);
-				try {
-					testeb = Serializer.serialize(20);
-					testeb = Serializer.toByteArray(20);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				Arquivo.escreverAquivoBin(testeb, "testeB");*/
 				
 			} else if (op == 2) {
 				System.out.println("- Informe o nome do arquivo .sql para insercao: ");
 				//nomeArquivo = scanner.next();
 				gerenciadorInsert = new GerenciadorInsert(Arquivo.lerArquivoInsert("insert"));
-				Arquivo.escreverInserts(gerenciadorInsert);
-				System.out.println(gerenciadorInsert.getInsertSucesso());
-				
+				if(Arquivo.escreverInserts(gerenciadorInsert)) {
+					System.out.println("Insercoes com sucesso: " +gerenciadorInsert.getInsertSucesso());
+				}
+				else {
+					System.out.println("Arquivo cheio!");
+				}
 			} else if (op == 3) {
 				System.out.println("- Informe o nome do arquivo .sql para listagem: ");
 				//nomeArquivo = scanner.next();
-				ArquivoBinario arquivoRecuperado = new ArquivoBinario("materia");
-				arquivoRecuperado.setContent(Arquivo.lerArquivoBin("materia"));
+				ArquivoBinario arquivoRecuperado = new ArquivoBinario("curso");
+				arquivoRecuperado.setContent(Arquivo.lerArquivoBin("curso"));
 				Metadado metadadoRecuperado = Arquivo.lerArquivoMet(arquivoRecuperado.getNomeArquivo());
 				GerenciadorInsert gerenciador = new GerenciadorInsert();
 				gerenciador.addMeta(metadadoRecuperado);
 				LinkedList<Insert> insertRecuperado = gerenciador.recuperaInsert(arquivoRecuperado);
+				
 				while(!insertRecuperado.isEmpty()) {
 					System.out.println(insertRecuperado.removeFirst().toString());
 				}
 			} else if (op == 4) {
+				System.out.println("- Informe o nome do arquivo .sql para deletar: ");
+				//nomeArquivo = scanner.next();
+				gerenciadorDelete = new GerenciadorDelete(Arquivo.lerArquivoDelete("delete"));
+				if(Arquivo.executarDeletes(gerenciadorDelete)) {
+					System.out.println("Deletes com sucesso: " + gerenciadorDelete.getDeleteSucesso());
+				}
+				else {
+					System.out.println("Erro eu deletar");
+				}
+				gerenciadorDelete.extrairDeletes();
 				
+				
+				System.out.println("aqui");
 			}
 		} while (op != 5);
 	}

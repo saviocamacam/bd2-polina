@@ -77,4 +77,9 @@ public class Metadado {
 		return quantidadeTotal;
 	}
 
+	public String getNomeTipo(String string) {
+		Campo campo = campos.get(campos.indexOf(new Campo(string)));
+		return campo.getTipo();
+	}
+
 }

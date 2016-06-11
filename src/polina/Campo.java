@@ -5,6 +5,7 @@ public class Campo {
 	private String tipo;
 	private int tamanho;
 	private String value;
+	private String operator;
 	private int offBase;
 	
 	public Campo(String nomeCampo) {
@@ -90,6 +91,14 @@ public class Campo {
 	}
 	public int getOffBase() {
 		return this.offBase;
+	}
+
+	public void setOperator(String string) {
+		this.operator = string;
+	}
+	
+	public String getOperator() {
+		return operator;
 	}
 	
 	

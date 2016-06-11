@@ -62,7 +62,7 @@ public class CabecalhoArquivo  {
 		return registros;
 	}
 	
-	private void serializarDadosFixos() {
+	public void serializarDadosFixos() {
 		ByteArrayOutputStream output = new ByteArrayOutputStream(6 + (registros * 2));	
 		try {
 			output.write(Serializer.toByteArrayShort(registros));
@@ -102,7 +102,10 @@ public class CabecalhoArquivo  {
 	}
 
 	public void setDeslocamentoArquivos(LinkedList<Offiset> deslocamentoArquivos) {
-		this.deslocamentoArquivos = deslocamentoArquivos;
+		for(Offiset o : deslocamentoArquivos) {
+			this.deslocamentoArquivos.add(o);
+		}
+		//this.deslocamentoArquivos = deslocamentoArquivos;
 		serializarDadosFixos();
 	}
 

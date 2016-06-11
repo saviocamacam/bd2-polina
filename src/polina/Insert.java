@@ -19,7 +19,7 @@ public class Insert {
 	}
 
 	public void setListaContents(LinkedList<Campo> listaContents) {
-		this.listaContents = listaContents;
+		this.listaContents.addAll(listaContents);
 	}
 
 	public int getBitMap() {
@@ -95,7 +95,7 @@ public class Insert {
 		return temp;
 	}
 
-	public void deserializeContents(Metadado metadado) {
+	public LinkedList<Campo> deserializeContents(Metadado metadado) {
 		int i = 0;
 		int aPartir = 0;
 		int bitMap = recuperaBitmap(metadado.getQuantidadeTotal(), metadado.getCampos().size());
@@ -183,7 +183,7 @@ public class Insert {
 			}
 			i++;
 		}
-		this.listaContents = recuperados;
+		return recuperados;
 		
 	}
 	
@@ -233,5 +233,10 @@ public class Insert {
 	        }
 	    }
 		return binaryarray;
+	}
+
+	public Campo getCampoNome(String nomeCampo) {
+		Campo campo = listaContents.get(listaContents.indexOf(new Campo(nomeCampo)));
+		return campo;
 	}
 }
