@@ -8,7 +8,7 @@ public class CabecalhoArquivo  {
 	private short registros;
 	private short excluidos;
 	private short primeiroLivre;
-	private LinkedList<Offiset> deslocamentoArquivos;
+	private LinkedList<Offset> deslocamentoArquivos;
 	private byte[] dadosSerializados;
 	
 	public CabecalhoArquivo() {
@@ -17,7 +17,7 @@ public class CabecalhoArquivo  {
 		this.primeiroLivre = 2000;
 		serializarDadosFixos();
 	}
-	public CabecalhoArquivo(short registros, short excluidos, short primeiroLivre, LinkedList<Offiset> deslocamentoArquivos) {
+	public CabecalhoArquivo(short registros, short excluidos, short primeiroLivre, LinkedList<Offset> deslocamentoArquivos) {
 		this.registros = registros;
 		this.excluidos = excluidos;
 		this.primeiroLivre = primeiroLivre;
@@ -42,7 +42,7 @@ public class CabecalhoArquivo  {
 		int i = 0;
 		while(i < registros) {
 			try {
-				deslocamentoArquivos.add(new Offiset(Serializer.toShortByteArray(getRegistroSerializado((pos += 2), arquivoBinario, 2))));
+				deslocamentoArquivos.add(new Offset(Serializer.toShortByteArray(getRegistroSerializado((pos += 2), arquivoBinario, 2))));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -97,12 +97,12 @@ public class CabecalhoArquivo  {
 		this.primeiroLivre = primeiroLivre;
 	}
 
-	public LinkedList<Offiset> getDeslocamentoArquivos() {
+	public LinkedList<Offset> getDeslocamentoArquivos() {
 		return deslocamentoArquivos;
 	}
 
-	public void setDeslocamentoArquivos(LinkedList<Offiset> deslocamentoArquivos) {
-		for(Offiset o : deslocamentoArquivos) {
+	public void setDeslocamentoArquivos(LinkedList<Offset> deslocamentoArquivos) {
+		for(Offset o : deslocamentoArquivos) {
 			this.deslocamentoArquivos.add(o);
 		}
 		//this.deslocamentoArquivos = deslocamentoArquivos;

@@ -5,21 +5,26 @@ import java.util.LinkedList;
 
 public class Insert {
 	private String nomeArquivo;
-	private LinkedList<Campo> listaContents;
+	private LinkedList<Campo> listaCampos;
 	private byte[] contentsSerialized;
 	private int bitMap;
 	private byte[] bitMapSerialized;
 	
 	public Insert() {
-		this.listaContents = new LinkedList<>();
+		this.listaCampos = new LinkedList<>();
 	}	
 
 	public LinkedList<Campo> getListaContents() {
-		return listaContents;
+		return listaCampos;
 	}
 
-	public void setListaContents(LinkedList<Campo> listaContents) {
-		this.listaContents.addAll(listaContents);
+	public void setListaContents(LinkedList<Campo> listaCampos) {
+		/*this.listaCampos = new LinkedList<>();
+		for(Campo c : listaContents) {
+			this.listaCampos.add(c);
+		}*/
+		this.listaCampos = listaCampos;
+		//this.listaContents.addAll(listaCampos);
 	}
 
 	public int getBitMap() {
@@ -89,8 +94,8 @@ public class Insert {
 	@Override
 	public String toString() {
 		String temp = "";
-		while(!listaContents.isEmpty()) {
-			temp += listaContents.removeFirst().getValue() + " ";
+		while(!listaCampos.isEmpty()) {
+			temp += listaCampos.removeFirst().getValue() + " ";
 		}
 		return temp;
 	}
@@ -105,68 +110,54 @@ public class Insert {
 		while(i < metadado.getCampos().size()) {
 			Campo campoMetadado = metadado.getCampos().get(i);
 			String tipo = campoMetadado.getTipo();
-			
+			Campo campo;
 			if(binaryArray[i]) {
-				
+				campo = new Campo(campoMetadado.getNomeCampo());
+				try{
 					if(tipo.equals("VARCHAR")) {
-						Offiset deslocamento = null;
+						Offset deslocamento = null;
 						byte[] byteDeslocamento = new byte[2];
 						byte[] tamDeslocamento = new byte[2];
-						try {
-							byteDeslocamento = getRegistroSerializado(aPartir, 2);
-							aPartir += 2;
-							tamDeslocamento = getRegistroSerializado(aPartir, 2);
-							deslocamento = new Offiset(Serializer.toShortByteArray(byteDeslocamento), Serializer.toShortByteArray(tamDeslocamento));
-							aPartir += 2;
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+						byteDeslocamento = getRegistroSerializado(aPartir, 2);
+						aPartir += 2;
+						tamDeslocamento = getRegistroSerializado(aPartir, 2);
+						deslocamento = new Offset(Serializer.toShortByteArray(byteDeslocamento), Serializer.toShortByteArray(tamDeslocamento));
+						aPartir += 2;
 						
 						byte[] varcharByteArrayRecuperado = getRegistroSerializado(deslocamento.getOffiset(), deslocamento.getTamDeslocamento());
-						try {
-							String varcharRecuperado = Serializer.toStringByteArray(varcharByteArrayRecuperado);
-							Campo campo = new Campo(campoMetadado.getNomeCampo());
-							campo.setValue(varcharRecuperado);
-							recuperados.add(campo);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+						//campo = new Campo(campoMetadado.getNomeCampo());
+						String varcharRecuperado = Serializer.toStringByteArray(varcharByteArrayRecuperado);
+						campo.setValue(varcharRecuperado);
+						//listaCampos.add(campo);
 					}
 					else if(tipo.equals("INTEGER")){
 						byte[] integerByteArrayRecuperado = getRegistroSerializado((campoMetadado.getOffBase()-4), 4);
-						try {
-							int integerRecuperado = Serializer.toIntByteArray(integerByteArrayRecuperado);
-							Campo campo = new Campo(campoMetadado.getNomeCampo());
-							campo.setValue(Integer.toString(integerRecuperado));
-							recuperados.add(campo);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+						//campo = new Campo(campoMetadado.getNomeCampo());
+						int integerRecuperado = Serializer.toIntByteArray(integerByteArrayRecuperado);
+						campo.setValue(Integer.toString(integerRecuperado));
+						//listaCampos.add(campo);
 					}
 					else if(tipo.equals("BOOLEAN")){
 						byte[] booleanByteArrayRecuperado = getRegistroSerializado((campoMetadado.getOffBase()-1) , 1);
-						try {
-							boolean booleanRecuperado = Serializer.toBoolByteArray(booleanByteArrayRecuperado);
-							Campo campo = new Campo(campoMetadado.getNomeCampo());
-							campo.setValue(Boolean.toString(booleanRecuperado));
-							recuperados.add(campo);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+						
+						boolean booleanRecuperado = Serializer.toBoolByteArray(booleanByteArrayRecuperado);
+						campo.setValue(Boolean.toString(booleanRecuperado));
+						//listaCampos.add(campo);
 					}
 					else if(tipo.equals("CHAR")){
 						byte[] charByteArrayRecuperado = getRegistroSerializado((campoMetadado.getOffBase()-campoMetadado.getTamanho()) , campoMetadado.getTamanho());
-						try {
-							String charRecuperado = Serializer.toStringByteArray(charByteArrayRecuperado);
-							Campo campo = new Campo(campoMetadado.getNomeCampo());
-							campo.setValue(charRecuperado);
-							recuperados.add(campo);
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+						//campo = new Campo(campoMetadado.getNomeCampo());
+						String charRecuperado = Serializer.toStringByteArray(charByteArrayRecuperado);
+						campo.setValue(charRecuperado);
+						//this.listaCampos.add(campo);
 					}
 					
 				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+				recuperados.add(campo);
+			}
 			else {
 				if(tipo.equals("VARCHAR")) {
 					aPartir += 4;
@@ -183,8 +174,8 @@ public class Insert {
 			}
 			i++;
 		}
+		this.listaCampos = recuperados;
 		return recuperados;
-		
 	}
 	
 	private int recuperaBitmap(int quantidadeTotal, int qtCampo) {
@@ -236,7 +227,7 @@ public class Insert {
 	}
 
 	public Campo getCampoNome(String nomeCampo) {
-		Campo campo = listaContents.get(listaContents.indexOf(new Campo(nomeCampo)));
+		Campo campo = listaCampos.get(listaCampos.indexOf(new Campo(nomeCampo)));
 		return campo;
 	}
 }

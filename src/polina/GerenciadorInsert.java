@@ -351,15 +351,13 @@ public class GerenciadorInsert {
 		Metadado metadado = listaMeta.peek();
 		int i = 0;
 		int posicaoFinal = 2000;
-		Insert insert;
-		LinkedList<Campo> listaCampos;
+		//Insert insert;
 		while(i < arquivoRecuperado.getCabecalho().getRegistros()) {
-			insert = new Insert();
-			Offiset offiset = arquivoRecuperado.getCabecalho().getDeslocamentoArquivos().removeFirst();
-			//int proximoOffiset = arquivoRecuperado.getCabecalho().getDeslocamentoArquivos().peek().getOffiset();
-			insert.setListaContentsSerialized(getRegistroSerializado(offiset.getOffiset(), arquivoRecuperado.getContent(), posicaoFinal));
-			posicaoFinal = offiset.getOffiset();
-			listaCampos = insert.deserializeContents(metadado);
+			Insert insert = new Insert();
+			Offset offset = arquivoRecuperado.getCabecalho().getDeslocamentoArquivos().removeFirst();
+			insert.setListaContentsSerialized(getRegistroSerializado(offset.getOffiset(), arquivoRecuperado.getContent(), posicaoFinal));
+			posicaoFinal = offset.getOffiset();
+			LinkedList<Campo> listaCampos = insert.deserializeContents(metadado);
 			insert.setListaContents(listaCampos);
 			listaRetorno.add(insert);
 			i++;

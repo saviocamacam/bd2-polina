@@ -1,16 +1,16 @@
 package polina;
 
-public class Offiset {
+public class Offset {
 	private short offiset;
 	private short tamDeslocamento;
 	private byte[] offisetSerialized;
 	
-	public Offiset(short offiset, short tamDeslocamento) {
+	public Offset(short offiset, short tamDeslocamento) {
 		this.offiset = offiset;
 		this.tamDeslocamento = tamDeslocamento;
 	}
 	
-	public Offiset(short offiset) {
+	public Offset(short offiset) {
 		this.offiset = offiset;
 	}
 	public short getOffiset() {

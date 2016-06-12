@@ -343,7 +343,7 @@ public class Arquivo {
 		}
 		
 		while(!conjuntoGerenciadores.isEmpty()) {
-			LinkedList<Offiset> listaOffset = new LinkedList<>();
+			LinkedList<Offset> listaOffset = new LinkedList<>();
 			GerenciadorInsert gerenciador = conjuntoGerenciadores.removeFirst();
 			
 			byte[] arquivoBinario = Arquivo.lerArquivoBin(gerenciador.getListaMeta().peek().getNomeArquivo());
@@ -359,7 +359,7 @@ public class Arquivo {
 			
 			while(!gerenciador.getListaInsert().isEmpty()) {
 				int tamOff = cabecalho.getPrimeiroLivre() - gerenciador.getListaInsert().peek().getListaContentsSerialized().length;
-				Offiset offset = new Offiset((short) tamOff);
+				Offset offset = new Offset((short) tamOff);
 				//offset.setOffisetSerialized(Serializer.toShortByteArray(ca));
 				listaOffset.add(offset);
 				cabecalho.setPrimeiroLivre((short)(tamOff));
@@ -454,16 +454,18 @@ public class Arquivo {
 			
 			GerenciadorInsert gerenciadorInsert = new GerenciadorInsert();
 			gerenciadorInsert.addMeta(metadado);
+			
 			LinkedList<Insert> insertRecuperado = gerenciadorInsert.recuperaInsert(arquivoRecuperado);
 			
 			while(!cabecalho.getDeslocamentoArquivos().isEmpty()) {
-				Offiset off = cabecalho.getDeslocamentoArquivos().peek();
+				Offset off = cabecalho.getDeslocamentoArquivos().peek();
 				Insert insert = insertRecuperado.peek();
 				Delete delete = gerenciador.getListaDelete().peek();
 				Campo compare = insert.getCampoNome(delete.getCampo().getNomeCampo());
 				
 				String tipo = metadado.getNomeTipo(delete.getCampo().getNomeCampo());
 				
+				//Exclusão por igualdade
 				if(delete.getCampo().getOperator().equals("=")) {
 					if(tipo.equals("VARCHAR")) {
 						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) == 0) {
@@ -474,15 +476,31 @@ public class Arquivo {
 						}
 					}
 					else if(tipo.equals("INTEGER")) {
-						
-					}
-					else if(tipo.equals("BOOLEAN")) {
-						
+						if(compare.getIntegerValue() == delete.getCampo().getIntegerValue()) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
 					}
 					else if(tipo.equals("CHAR")) {
-						
+						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) == 0) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+					else if(tipo.equals("BOOLEAN")) {
+						if(compare.getBooleanValue() != delete.getCampo().getBooleanValue()) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
 					}
 				}
+				//Exclusão por diferença
 				else if (delete.getCampo().getOperator().equals("!=")) {
 					if(tipo.equals("VARCHAR")) {
 						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) != 0) {
@@ -492,7 +510,32 @@ public class Arquivo {
 							deletesSucesso++;
 						}
 					}
+					else if(tipo.equals("INTEGER")) {
+						if(compare.getIntegerValue() != delete.getCampo().getIntegerValue()) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+					else if(tipo.equals("CHAR")) {
+						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) != 0) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+					else if(tipo.equals("BOOLEAN")) {
+						if(compare.getBooleanValue() != delete.getCampo().getBooleanValue()) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
 				}
+				//Exclusão por maior
 				else if (delete.getCampo().getOperator().equals(">")) {
 					if(tipo.equals("VARCHAR")) {
 						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) > 0) {
@@ -502,9 +545,43 @@ public class Arquivo {
 							deletesSucesso++;
 						}
 					}
+					else if(tipo.equals("INTEGER")) {
+						if(compare.getIntegerValue() > delete.getCampo().getIntegerValue()) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+					else if(tipo.equals("CHAR")) {
+						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) > 0) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+					
 				}
+				//Exclusão por maior
 				else if (delete.getCampo().getOperator().equals("<")) {
 					if(tipo.equals("VARCHAR")) {
+						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) < 0) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+					else if(tipo.equals("INTEGER")) {
+						if(compare.getIntegerValue() < delete.getCampo().getIntegerValue()) {
+							cabecalho.getDeslocamentoArquivos().removeFirst();
+							insertRecuperado.removeFirst();
+							deletesFromLocalManager++;
+							deletesSucesso++;
+						}
+					}
+					else if(tipo.equals("CHAR")) {
 						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) < 0) {
 							cabecalho.getDeslocamentoArquivos().removeFirst();
 							insertRecuperado.removeFirst();
@@ -523,7 +600,7 @@ public class Arquivo {
 			
 			while(!insertRecuperado.isEmpty()) {
 				int tamOff = cabecalho.getPrimeiroLivre() - insertRecuperado.peek().getListaContentsSerialized().length;
-				Offiset offset = new Offiset((short) tamOff);
+				Offset offset = new Offset((short) tamOff);
 				//listaOffset.add(offset);
 				cabecalho.setPrimeiroLivre((short)(tamOff));
 				try {

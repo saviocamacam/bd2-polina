@@ -6,3 +6,5 @@ DELETE FROM curso WHERE cidade != 'Maringa';
 DELETE FROM curso WHERE cidade = 'CampoMourao';
 DELETE FROM curso WHERE nome = 'Steinmacher';
 DELETE FROM curso WHERE nome != 'Andre';
+DELETE FROM curso WHERE validacao = true;
+DELETE FROM curso WHERE validacao = false;
