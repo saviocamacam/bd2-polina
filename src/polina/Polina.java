@@ -18,14 +18,14 @@ public class Polina {
 			op = scanner.nextInt();
 			if(op == 1) {
 				System.out.println("- Informe o nome do arquivo .sql para criacao: ");
-				//nomeArquivo = scanner.next();
-				gerenciadorMeta = new GerenciadorMetadados(Arquivo.lerArquivoCreate("create"));
+				nomeArquivo = scanner.next();
+				gerenciadorMeta = new GerenciadorMetadados(Arquivo.lerArquivoCreate(nomeArquivo));
 				Arquivo.escreverGerenciador(gerenciadorMeta);
 				
 			} else if (op == 2) {
 				System.out.println("- Informe o nome do arquivo .sql para insercao: ");
-				//nomeArquivo = scanner.next();
-				gerenciadorInsert = new GerenciadorInsert(Arquivo.lerArquivoInsert("insert"));
+				nomeArquivo = scanner.next();
+				gerenciadorInsert = new GerenciadorInsert(Arquivo.lerArquivoInsert(nomeArquivo));
 				if(Arquivo.escreverInserts(gerenciadorInsert)) {
 					System.out.println("Insercoes com sucesso: " +gerenciadorInsert.getInsertSucesso());
 				}
@@ -34,21 +34,21 @@ public class Polina {
 				}
 			} else if (op == 3) {
 				System.out.println("- Informe o nome do arquivo .sql para listagem: ");
-				//nomeArquivo = scanner.next();
-				ArquivoBinario arquivoRecuperado = new ArquivoBinario("curso");
-				arquivoRecuperado.setContent(Arquivo.lerArquivoBin("curso"));
+				nomeArquivo = scanner.next();
+				ArquivoBinario arquivoRecuperado = new ArquivoBinario(nomeArquivo);
+				arquivoRecuperado.setContent(Arquivo.lerArquivoBin(nomeArquivo));
 				Metadado metadadoRecuperado = Arquivo.lerArquivoMet(arquivoRecuperado.getNomeArquivo());
 				GerenciadorInsert gerenciador = new GerenciadorInsert();
 				gerenciador.addMeta(metadadoRecuperado);
 				LinkedList<Insert> insertRecuperado = gerenciador.recuperaInsert(arquivoRecuperado);
-				
+				System.out.println(arquivoRecuperado.getRegistros());
 				while(!insertRecuperado.isEmpty()) {
 					System.out.println(insertRecuperado.removeFirst().toString());
 				}
 			} else if (op == 4) {
 				System.out.println("- Informe o nome do arquivo .sql para deletar: ");
-				//nomeArquivo = scanner.next();
-				gerenciadorDelete = new GerenciadorDelete(Arquivo.lerArquivoDelete("delete"));
+				nomeArquivo = scanner.next();
+				gerenciadorDelete = new GerenciadorDelete(Arquivo.lerArquivoDelete(nomeArquivo));
 				if(Arquivo.executarDeletes(gerenciadorDelete)) {
 					System.out.println("Deletes com sucesso: " + gerenciadorDelete.getDeleteSucesso());
 				}

@@ -6,4 +6,4 @@ fundacao INTEGER 20
 estadoCurso BOOLEAN 21
 duracao INTEGER 25
 validacao BOOLEAN 26
-coordernador CHAR 20 46
+coordenador CHAR 20 46

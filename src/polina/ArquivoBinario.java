@@ -1,9 +1,11 @@
 package polina;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 public class ArquivoBinario {
 	private String nomeArquivo;
+	private int registros;
 	private CabecalhoArquivo cabecalho;
 	private byte[] content;
 	
@@ -20,6 +22,13 @@ public class ArquivoBinario {
 	private void carregaCabecalho() {
 		ByteArrayOutputStream output = new ByteArrayOutputStream(2000);
 		output.write(cabecalho.getDadosSerializados(), 0, 6 +(cabecalho.getRegistros() * 2));
+		byte[] livres = new byte[2000 - (cabecalho.getDadosSerializados().length)];
+		try {
+			output.write(livres);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		this.content = output.toByteArray();
 	}
 	public byte[] getContent() {
@@ -45,6 +54,12 @@ public class ArquivoBinario {
 
 	public void setNomeArquivo(String nomeArquivo) {
 		this.nomeArquivo = nomeArquivo;
+	}
+	public int getRegistros() {
+		return registros;
+	}
+	public void setRegistros(int registros) {
+		this.registros = registros;
 	}
 
 }

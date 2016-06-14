@@ -1,3 +1,5 @@
+/**/
+
 package polina;
 
 public class Campo {

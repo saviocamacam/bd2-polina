@@ -7,6 +7,6 @@ CREATE TABLE curso(
     estadoCurso BOOLEAN,
     duracao INTEGER,
     validacao BOOLEAN,
-    coordernador CHAR(20)); 
+    coordenador CHAR(20)); 
 CREATE TABLE materia(id INTEGER, nome CHAR(25), professor VARCHAR(25));
 CREATE TABLE tarefa(id INTEGER, tipo VARCHAR(10), dataFinal VARCHAR(10));

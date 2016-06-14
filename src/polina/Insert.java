@@ -52,7 +52,7 @@ public class Insert {
 		
 		this.bitMapSerialized = cutBitMap(getQt(meta.getCampos().size()));
 	}
-	
+	//Recorta o bitmap no espaço que lhe cabe
 	private byte[] cutBitMap(int qt) {
 		byte[] cutted = new byte[qt];
 		try {
@@ -94,12 +94,19 @@ public class Insert {
 	@Override
 	public String toString() {
 		String temp = "";
-		while(!listaCampos.isEmpty()) {
-			temp += listaCampos.removeFirst().getValue() + " ";
+		int i = 0;
+		while(i < listaCampos.size()) {
+			Campo campo = listaCampos.get(i);
+			if(campo.getTipo().equals("VARCHAR") || campo.getTipo().equals("CHAR")) {
+				temp += "'" + campo.getValue() + "'" + " ";
+			}
+			else 
+				temp += campo.getValue() + " ";
+			i++;
 		}
 		return temp;
 	}
-
+	//Esse método retorna a lista de campos desse insert convertidos de para seus tipos primitivos
 	public LinkedList<Campo> deserializeContents(Metadado metadado) {
 		int i = 0;
 		int aPartir = 0;
@@ -125,31 +132,27 @@ public class Insert {
 						aPartir += 2;
 						
 						byte[] varcharByteArrayRecuperado = getRegistroSerializado(deslocamento.getOffiset(), deslocamento.getTamDeslocamento());
-						//campo = new Campo(campoMetadado.getNomeCampo());
 						String varcharRecuperado = Serializer.toStringByteArray(varcharByteArrayRecuperado);
 						campo.setValue(varcharRecuperado);
-						//listaCampos.add(campo);
+						campo.setTipo(tipo);
 					}
 					else if(tipo.equals("INTEGER")){
 						byte[] integerByteArrayRecuperado = getRegistroSerializado((campoMetadado.getOffBase()-4), 4);
-						//campo = new Campo(campoMetadado.getNomeCampo());
 						int integerRecuperado = Serializer.toIntByteArray(integerByteArrayRecuperado);
 						campo.setValue(Integer.toString(integerRecuperado));
-						//listaCampos.add(campo);
+						campo.setTipo(tipo);
 					}
 					else if(tipo.equals("BOOLEAN")){
 						byte[] booleanByteArrayRecuperado = getRegistroSerializado((campoMetadado.getOffBase()-1) , 1);
-						
 						boolean booleanRecuperado = Serializer.toBoolByteArray(booleanByteArrayRecuperado);
 						campo.setValue(Boolean.toString(booleanRecuperado));
-						//listaCampos.add(campo);
+						campo.setTipo(tipo);
 					}
 					else if(tipo.equals("CHAR")){
 						byte[] charByteArrayRecuperado = getRegistroSerializado((campoMetadado.getOffBase()-campoMetadado.getTamanho()) , campoMetadado.getTamanho());
-						//campo = new Campo(campoMetadado.getNomeCampo());
 						String charRecuperado = Serializer.toStringByteArray(charByteArrayRecuperado);
 						campo.setValue(charRecuperado);
-						//this.listaCampos.add(campo);
+						campo.setTipo(tipo);
 					}
 					
 				}

@@ -12,7 +12,7 @@ public class Serializer {
 	public Serializer() {
 	
 	}
-	
+	//Converte em vetor de bytes um valor Short
 	public static byte[] toByteArrayShort(int obj) throws IOException {
         byte[] bytes = null;
         ByteArrayOutputStream bos = null;
@@ -33,7 +33,7 @@ public class Serializer {
         }
         return bytes;
     }
-	
+	//Converte em vetor de bytes uma String
 	public static byte[] toByteArrayString(String obj) throws IOException {
         byte[] bytes = null;
         ByteArrayOutputStream bos = null;
@@ -54,7 +54,7 @@ public class Serializer {
         }
         return bytes;
     }
-	
+	//converte em bytes um valor inteiro
 	public static byte[] toByteArrayInt(Integer obj) throws IOException {
 		byte[] bytes = null;
 		ByteArrayOutputStream bos = null;
@@ -75,7 +75,7 @@ public class Serializer {
 		}
 		return bytes;
 	}
-	
+	//Converte valor booleano em vetor de bytes
 	public static byte[] toByteArrayBool(Boolean obj) throws IOException {
 		byte[] bytes = null;
 		ByteArrayOutputStream bos = null;
@@ -96,7 +96,7 @@ public class Serializer {
 		}
 		return bytes;
 	}
-	
+	//Devolve o valor em short de um dado vetor de bytes
 	public static short toShortByteArray(byte[] obj) throws IOException {
         short bytes;
         ByteArrayInputStream bis = null;
@@ -115,7 +115,7 @@ public class Serializer {
         }
         return bytes;
     }
-	
+	//Transforma em String um vetor de bytes
 	@SuppressWarnings("deprecation")
 	public static String toStringByteArray(byte[] obj) throws IOException {
         String bytes = null;
@@ -133,9 +133,20 @@ public class Serializer {
                 bis.close();
             }
         }
-        return bytes;
+        
+        return tiraPreenchimento(bytes);
     }
-	
+	//Devolve o valor original de um char sem o 'preenchimento'
+	private static String tiraPreenchimento(String bytes) {
+		String temp = "";
+		for(Character c : bytes.toCharArray()) {
+			if(!c.equals('#')) {
+				temp = temp + c;
+			}
+		}
+		return temp;
+	}
+	//Transforma int em vetor de bytes
 	public static int toIntByteArray(byte[] obj) throws IOException {
 		int bytes;
 		ByteArrayInputStream bis = null;
@@ -154,7 +165,7 @@ public class Serializer {
 		}
 		return bytes;
 	}
-	
+	//Transforma boolean em vetor de bytes
 	public static boolean toBoolByteArray(byte[] obj) throws IOException {
 		boolean bytes;
 		ByteArrayInputStream bis = null;

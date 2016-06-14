@@ -1,3 +1,9 @@
+/*
+ * Para cada arquivo binário gerado, é criado um cabeçalho com as informações pertinentes a ele, como a 
+ * quantidade de registros inseridos, quantidade de excluidos, deslocamento para o primeiro byte livre
+ * e uma lista de deslocamentos para os arquivos
+ * */
+
 package polina;
 
 import java.io.ByteArrayOutputStream;
@@ -30,6 +36,8 @@ public class CabecalhoArquivo  {
 		this.deslocamentoArquivos = new LinkedList<>();
 		setCabecalho(arquivoBinario);
 	}
+	
+	/*Dado um arquivo binário, esse método inicializa um cabeçalho com seus valores convertidos para binário*/
 	private void setCabecalho(byte[] arquivoBinario) {
 		int pos = 0;
 		try {
@@ -51,6 +59,10 @@ public class CabecalhoArquivo  {
 		//serializarDadosFixos();
 	}
 	
+	/*
+	 * Dada uma posicao inicial e uma final, esse método retorna o conteúdo nesse intervalo que representa alguma
+	 * informação no cabeçalho
+	 * */
 	private byte[] getRegistroSerializado(int aPartir, byte[] arquivoBinario, int tamanho) {
 		byte[] registros = new byte[tamanho];
 		int i=aPartir;
@@ -61,7 +73,9 @@ public class CabecalhoArquivo  {
 		}
 		return registros;
 	}
-	
+	/* Esse método converte todos os valores primitivos relacionados ao cabeçalho agrupando as informações
+	 * num vetor de bytes identificado como Dados Serializados
+	 * */
 	public void serializarDadosFixos() {
 		ByteArrayOutputStream output = new ByteArrayOutputStream(6 + (registros * 2));	
 		try {
@@ -123,5 +137,13 @@ public class CabecalhoArquivo  {
 
 	public void setRegistros(short registros) {
 		this.registros = registros;
+	}
+	public short getDiferenca() {
+		return (short) (registros-excluidos);
+	}
+	public void resetDeslocamentos() {
+		this.registros = 0;
+		this.primeiroLivre = 2000;
+		this.deslocamentoArquivos = new LinkedList<>();
 	}
 }

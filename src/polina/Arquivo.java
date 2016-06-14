@@ -25,7 +25,7 @@ public class Arquivo {
 	public Arquivo() {
 		
 	}
-	
+	//Tokenina e retorna uma lista de Strings com os inserts válidos lidos do arquivo de creates
 	public static LinkedList<String> lerArquivoCreate(String nomeArquivo) {
 		LinkedList<String> retornaCreates = new LinkedList<>();
 		List<String> linhas = new ArrayList<>();
@@ -84,7 +84,7 @@ public class Arquivo {
 		}
 		return retornaCreates;
 	}
-	
+	//Devolve uma lista de strings para os inserts para um Gerenciador de Inserts
 	public static LinkedList<String > lerArquivoInsert(String nomeArquivo) {
 		LinkedList<String> retornaInserts = new LinkedList<>();
 		List<String> linhas = new ArrayList<>();
@@ -101,10 +101,13 @@ public class Arquivo {
 		int i = 0;
 		String temp = new String();
 		for(String s : linhas) {
-			String[] piecesBreaked= s.split("[[,][ ][(][)][;]]");
-			//String nomeTable = new String(piecesBreaked[2]);
+			String[] piecesBreaked= s.split("[[ ][(][)][;][']]");
+			//String[] primeiraParte = piecesBreaked[0].split(" ");
+			
+			//String[] novaString = newPiecesBreaked(primeiraParte, piecesBreaked);
+			
 			for(String piece : piecesBreaked) {
-				if(!piece.equals(insert)  && !piece.equals(into) && !piece.equals(voidS)) {
+				if(!piece.equals(insert)  && !piece.equals(into) && !piece.equals(voidS) && !piece.equals(" ")) {
 					if(piece.equals(values)) {
 						temp = temp.concat("|");
 					}
@@ -126,7 +129,7 @@ public class Arquivo {
 		}
 		return retornaInserts;
 	}
-	
+	//Devolve uma lista de strings contendo as linhas de deletes para um Gerenciador de Deletes
 	public static LinkedList<String> lerArquivoDelete(String nomeArquivo) {
 		LinkedList<String> retornaDeletes = new LinkedList<>();
 		List<String> linhas = new ArrayList<>();
@@ -143,7 +146,7 @@ public class Arquivo {
 		int i = 0;
 		String temp = new String();
 		for(String s : linhas) {
-			String[] piecesBreaked = s.split("[[,][ ][(][)][;]]");
+			String[] piecesBreaked = s.split("[[,][ ][(][)][;][']]");
 			for(String piece : piecesBreaked) {
 				if(!piece.equals(delete) && !piece.equals(from)) {
 					if(piece.equals(where)) {
@@ -205,7 +208,7 @@ public class Arquivo {
 		metaDado.setQuantidadeTotal(quantidadeInt + quantidadeChar + quantidadeVarchar + quantidadeBool);
 		return metaDado;
 	}
-	
+	//Gera o arquivo de metadado de uma dada tabela
 	public static void escreverArquivoMet(Metadado meta) {
 		try {
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(meta.getNomeArquivo()+".met"), "utf-8"));
@@ -230,14 +233,14 @@ public class Arquivo {
 		}
 		
 	}
-
+	//Dado um conjunto de metadados retirados de um create, gera diversos metadados
 	public static void escreverGerenciador(GerenciadorMetadados novoGerenciador) {
 		for(Metadado meta : novoGerenciador.extrairMetaDados()) {
 			escreverArquivoMet(meta);
 			inicializarArquivoBin(meta);
 		}
 	}
-	
+	//Inicializa os arquivos binários dos creates realizados
 	private static void inicializarArquivoBin(Metadado meta) {
 		ArquivoBinario arquivoBinario = new ArquivoBinario(meta.getNomeArquivo(), 2000);
 		OutputStream output = null;
@@ -326,15 +329,6 @@ public class Arquivo {
 		}
 		
 		int i = 0;
-		/*while(i < conjuntoGerenciadores.size()) {
-			if(insertBruto.getFirst().getNomeArquivo().equals(conjuntoGerenciadores.get(i))) {
-				
-			}
-			else
-				i++;
-		}*/
-		
-		
 		while(!insertBruto.isEmpty()) {
 			if(conjuntoGerenciadores.get(i).primeiroMeta().getNomeArquivo().equals(insertBruto.peek().getNomeArquivo())) {
 				conjuntoGerenciadores.get(i).addInsert(insertBruto.removeFirst());
@@ -347,7 +341,6 @@ public class Arquivo {
 			GerenciadorInsert gerenciador = conjuntoGerenciadores.removeFirst();
 			
 			byte[] arquivoBinario = Arquivo.lerArquivoBin(gerenciador.getListaMeta().peek().getNomeArquivo());
-			
 			CabecalhoArquivo cabecalho = new CabecalhoArquivo(arquivoBinario);
 			int iterator = 0;
 			
@@ -416,7 +409,6 @@ public class Arquivo {
 	}
 	
 	public static boolean executarDeletes(GerenciadorDelete gerenciadorDelete) {
-		int deletesSucesso = 0;
 		LinkedList<GerenciadorDelete> conjuntoGerenciadoresDeletes = new LinkedList<>();
 		LinkedList<Delete> deleteBruto = new LinkedList<>();
 		
@@ -440,9 +432,8 @@ public class Arquivo {
 			} else
 				i++;
 		}
-		
 		while(!conjuntoGerenciadoresDeletes.isEmpty()) {
-			int deletesFromLocalManager = 0;
+			short deletesFromLocalManager = 0;
 			GerenciadorDelete gerenciador = conjuntoGerenciadoresDeletes.removeFirst();
 			Metadado metadado = gerenciador.primeiroMeta();
 			byte[] arquivoBinario = Arquivo.lerArquivoBin(gerenciador.getListaMeta().peek().getNomeArquivo());
@@ -457,185 +448,184 @@ public class Arquivo {
 			
 			LinkedList<Insert> insertRecuperado = gerenciadorInsert.recuperaInsert(arquivoRecuperado);
 			
-			while(!cabecalho.getDeslocamentoArquivos().isEmpty()) {
-				Offset off = cabecalho.getDeslocamentoArquivos().peek();
-				Insert insert = insertRecuperado.peek();
-				Delete delete = gerenciador.getListaDelete().peek();
-				Campo compare = insert.getCampoNome(delete.getCampo().getNomeCampo());
-				
-				String tipo = metadado.getNomeTipo(delete.getCampo().getNomeCampo());
-				
-				//Exclusão por igualdade
-				if(delete.getCampo().getOperator().equals("=")) {
-					if(tipo.equals("VARCHAR")) {
-						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) == 0) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("INTEGER")) {
-						if(compare.getIntegerValue() == delete.getCampo().getIntegerValue()) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("CHAR")) {
-						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) == 0) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("BOOLEAN")) {
-						if(compare.getBooleanValue() != delete.getCampo().getBooleanValue()) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-				}
-				//Exclusão por diferença
-				else if (delete.getCampo().getOperator().equals("!=")) {
-					if(tipo.equals("VARCHAR")) {
-						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) != 0) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("INTEGER")) {
-						if(compare.getIntegerValue() != delete.getCampo().getIntegerValue()) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("CHAR")) {
-						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) != 0) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("BOOLEAN")) {
-						if(compare.getBooleanValue() != delete.getCampo().getBooleanValue()) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-				}
-				//Exclusão por maior
-				else if (delete.getCampo().getOperator().equals(">")) {
-					if(tipo.equals("VARCHAR")) {
-						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) > 0) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("INTEGER")) {
-						if(compare.getIntegerValue() > delete.getCampo().getIntegerValue()) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("CHAR")) {
-						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) > 0) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
+			for(Delete delete : gerenciador.getListaDelete()) {
+				i = 0;
+				while(i < insertRecuperado.size()) {
+					Insert insert = insertRecuperado.get(i);
 					
+					if(insert.getListaContents().indexOf(new Campo(delete.getCampo().getNomeCampo())) < 0) {
+						i++;
+					}
+					else {
+						Campo compare = insert.getCampoNome(delete.getCampo().getNomeCampo());
+						
+						String tipo = metadado.getNomeTipo(delete.getCampo().getNomeCampo());
+						
+						//Exclusão por igualdade
+						if(delete.getCampo().getOperator().equals("=")) {
+							if(tipo.equals("VARCHAR")) {
+								if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) == 0) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("INTEGER")) {
+								if(compare.getIntegerValue() == delete.getCampo().getIntegerValue()) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("CHAR")) {
+								if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) == 0) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("BOOLEAN")) {
+								if(compare.getBooleanValue() == delete.getCampo().getBooleanValue()) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+						}
+						//Exclusão por diferença
+						else if (delete.getCampo().getOperator().equals("!=")) {
+							if(tipo.equals("VARCHAR")) {
+								if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) != 0) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("INTEGER")) {
+								if(compare.getIntegerValue() != delete.getCampo().getIntegerValue()) {
+									insertRecuperado.removeFirst();
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("CHAR")) {
+								if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) != 0) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("BOOLEAN")) {
+								if(compare.getBooleanValue() != delete.getCampo().getBooleanValue()) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+						}
+						//Exclusão por maior
+						else if (delete.getCampo().getOperator().equals(">")) {
+							if(tipo.equals("VARCHAR")) {
+								if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) > 0) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("INTEGER")) {
+								if(compare.getIntegerValue() > delete.getCampo().getIntegerValue()) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("CHAR")) {
+								if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) > 0) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							
+						}
+						//Exclusão por maior
+						else if (delete.getCampo().getOperator().equals("<")) {
+							if(tipo.equals("VARCHAR")) {
+								if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) < 0) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("INTEGER")) {
+								if(compare.getIntegerValue() < delete.getCampo().getIntegerValue()) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+							else if(tipo.equals("CHAR")) {
+								if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) < 0) {
+									insertRecuperado.remove(i);
+									i--;
+									deletesFromLocalManager++;
+								}
+							}
+						}
+						i++;
+					}
 				}
-				//Exclusão por maior
-				else if (delete.getCampo().getOperator().equals("<")) {
-					if(tipo.equals("VARCHAR")) {
-						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) < 0) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("INTEGER")) {
-						if(compare.getIntegerValue() < delete.getCampo().getIntegerValue()) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-					else if(tipo.equals("CHAR")) {
-						if(compare.getStringValue().compareToIgnoreCase(delete.getCampo().getStringValue()) < 0) {
-							cabecalho.getDeslocamentoArquivos().removeFirst();
-							insertRecuperado.removeFirst();
-							deletesFromLocalManager++;
-							deletesSucesso++;
-						}
-					}
-				}
-				
 			}
+			short registrosAnteriores = cabecalho.getRegistros();
+			cabecalho.setExcluidos(deletesFromLocalManager);
+			cabecalho.resetDeslocamentos();
 			cabecalho.serializarDadosFixos();
-			
-			LinkedList<ByteArrayOutputStream> listaTemp = new LinkedList<>();
-			ByteArrayOutputStream bufferInsert = new ByteArrayOutputStream();
-			ByteArrayOutputStream bufferArquivo = new ByteArrayOutputStream();
-			
-			while(!insertRecuperado.isEmpty()) {
-				int tamOff = cabecalho.getPrimeiroLivre() - insertRecuperado.peek().getListaContentsSerialized().length;
-				Offset offset = new Offset((short) tamOff);
-				//listaOffset.add(offset);
-				cabecalho.setPrimeiroLivre((short)(tamOff));
-				try {
-					ByteArrayOutputStream bufferTemp = new ByteArrayOutputStream();
-					bufferTemp.write(insertRecuperado.removeFirst().getListaContentsSerialized());
-					listaTemp.add(bufferTemp);
+			cabecalho.setRegistros((short) (registrosAnteriores-deletesFromLocalManager));
+			int deletes = gerenciadorDelete.getDeleteSucesso();
+			deletes += deletesFromLocalManager;
+				gerenciadorDelete.setDeleteSucesso(deletes);
+				LinkedList<ByteArrayOutputStream> listaTemp = new LinkedList<>();
+				ByteArrayOutputStream bufferInsert = new ByteArrayOutputStream();
+				ByteArrayOutputStream bufferArquivo = new ByteArrayOutputStream();
+				LinkedList<Offset> listaOffset = new LinkedList<>();
+				
+				while(!insertRecuperado.isEmpty()) {
+					int tamOff = cabecalho.getPrimeiroLivre() - insertRecuperado.peek().getListaContentsSerialized().length;
+					Offset offset = new Offset((short) tamOff);
+					listaOffset.add(offset);
+					cabecalho.setPrimeiroLivre((short)(tamOff));
+					try {
+						ByteArrayOutputStream bufferTemp = new ByteArrayOutputStream();
+						bufferTemp.write(insertRecuperado.removeFirst().getListaContentsSerialized());
+						listaTemp.add(bufferTemp);
 					
-					//iterator++;
-				} catch (IOException e) {
-					e.printStackTrace();
+						//iterator++;
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
-			}
 			
-			for(i=listaTemp.size()-1 ; i>=0 ; i-- ) {
+				for(i=listaTemp.size()-1 ; i>=0 ; i-- ) {
+					try {
+						bufferInsert.write(listaTemp.get(i).toByteArray());
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			
+				cabecalho.setDeslocamentoArquivos(listaOffset);
 				try {
-					bufferInsert.write(listaTemp.get(i).toByteArray());
+					bufferArquivo.write(cabecalho.getDadosSerializados());
+					int tam = 2000 - (cabecalho.getDadosSerializados().length + bufferInsert.toByteArray().length);
+					byte[] livres = new byte[tam];
+					bufferArquivo.write(livres);
+					bufferArquivo.write(bufferInsert.toByteArray());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				Arquivo.escreverAquivoBin(bufferArquivo.toByteArray(), gerenciador.getListaMeta().peek().getNomeArquivo());
 			}
-			
-			
-			try {
-				bufferArquivo.write(cabecalho.getDadosSerializados());
-				int tam = 2000 - (cabecalho.getDadosSerializados().length + bufferInsert.toByteArray().length);
-				byte[] livres = new byte[tam];
-				bufferArquivo.write(livres);
-				bufferArquivo.write(bufferInsert.toByteArray());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			Arquivo.escreverAquivoBin(bufferArquivo.toByteArray(), gerenciador.getListaMeta().peek().getNomeArquivo());
-			
-		}
-		if(deletesSucesso <= 0) {
+		if(gerenciadorDelete.getDeleteSucesso() <= 0) {
 			return false;
 		}
 		else

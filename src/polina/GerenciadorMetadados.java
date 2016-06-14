@@ -1,7 +1,9 @@
 package polina;
 
 import java.util.LinkedList;
-
+/*
+ * Esse objeto guarda os metadados dos arquivos manipulados
+ * */
 public class GerenciadorMetadados {
 	private LinkedList<String> listaString;
 	private LinkedList<Metadado> metadados;

@@ -27,9 +27,10 @@ public class GerenciadorInsert {
 			
 			String insertString = listaString.removeFirst();
 			String[] insertExtraido = insertString.split("[|]");
-			String[] campoMetaExtraido = insertExtraido[0].split(" ");
+			String[] campoMetaExtraido = insertExtraido[0].split("[ ,]");
 			String[] campoMeta = retiraNomeTable(campoMetaExtraido);
-			String[] campoValues = insertExtraido[1].split(" ");
+			String[] campoValuesWithSpace = insertExtraido[1].split("[,]");
+			String[] campoValues = retiraEspacos(campoValuesWithSpace);
 			Metadado novoMetadado = Arquivo.lerArquivoMet(campoMetaExtraido[0]);
 			
 			
@@ -55,6 +56,7 @@ public class GerenciadorInsert {
 			int i = 0;
 			int j = 0;
 			int primeiroVary = 0;
+			int flag = 0;
 			//int indice = 0;
 			
 			boolean[] bynaryArray = getBynaryArry(bitmap, novoMetadado.getCampos().size());
@@ -66,6 +68,8 @@ public class GerenciadorInsert {
 				if(bynaryArray[i]) {
 					Campo campoInsert = new Campo(campoMeta[j]);
 					campoInsert.setValue(campoValues[j]);
+					if((tipo.equals("VARCHAR") || tipo.equals("CHAR")) && campoInsert.getValue().length() > campoMetadado.getTamanho())
+						flag = 1;
 					
 					try {
 						if(tipo.equals("VARCHAR")) {
@@ -85,7 +89,7 @@ public class GerenciadorInsert {
 							campoInsert.setTamanho(campoInsert.getCharValue().length());
 							iterator = 0;
 							while(iterator < campoMetadado.getTamanho() - campoInsert.getTamanho()) {
-								bufferCampoFixo.write(Serializer.toByteArrayChar("0"));
+								bufferCampoFixo.write(Serializer.toByteArrayChar("#"));
 								iterator++;
 							}
 							bufferCampoFixo.write(Serializer.toByteArrayChar(campoInsert.getCharValue()));
@@ -114,7 +118,7 @@ public class GerenciadorInsert {
 						else if(tipo.equals("CHAR")){
 							iterator = 0;
 							while(iterator < campoMetadado.getTamanho()) {
-								bufferCampoFixo.write(Serializer.toByteArrayChar("0"));
+								bufferCampoFixo.write(Serializer.toByteArrayChar("#"));
 								iterator++;
 							}
 							primeiroVary += campoMetadado.getTamanho();
@@ -125,99 +129,6 @@ public class GerenciadorInsert {
 				}
 				i++;
 			}
-			
-			/*while(i < campoValues.length && campoValues.length == campoMeta.length) {
-				Campo campo = new Campo(campoMeta[i]);
-				campo.setValue(campoValues[i]);
-				
-				int proximoIndice = 0;
-				String proximoTipo = "";
-				if(i+1 < campoValues.length) {
-					Campo proximoCampo = new Campo(campoMeta[i+1]);
-					proximoCampo.setValue(campoValues[i+1]);
-					
-					proximoIndice = novoMetadado.getCampos().indexOf(proximoCampo);
-					proximoTipo = novoMetadado.getCampos().get(proximoIndice).getTipo(campoMeta[i+1]);
-				}
-				
-				indice = novoMetadado.getCampos().indexOf(campo);
-				String tipo = novoMetadado.getCampos().get(indice).getTipo(campoMeta[i]);
-				
-				int flagNullPositionVar = 0;
-				int flagNullPositionInt = 0;
-				int flagNullPositionChar = 0;
-				int flagNullPositionBool = 0;
-				
-				if(proximoIndice - indice == 2 && proximoTipo.equals("VARCHAR")) {
-					flagNullPositionVar = 1;
-				}
-				else if(proximoIndice - indice == 2 && proximoTipo.equals("INTEGER")) {
-					flagNullPositionInt = 1;
-				}
-				else if(proximoIndice - indice == 2 && proximoTipo.equals("CHAR")) {
-					flagNullPositionChar = 1;
-				}
-				else if(proximoIndice - indice == 2 && proximoTipo.equals("BOOLEAN")) {
-					flagNullPositionBool = 1;
-				}
-				
-				try {
-					if(tipo.equals("VARCHAR")) {
-						campo.setTamanho(campo.getStringValue().length());
-						bufferCampoVar.write(Serializer.toByteArrayString(campo.getStringValue()));
-						deslocamentos.add(campo.getStringValue().length());
-						
-						if(flagNullPositionVar == 1) {
-							deslocamentos.add(0);
-							flagNullPositionVar = 0;
-						}
-					}
-					else if(tipo.equals("INTEGER")){
-						bufferCampoFixo.write(Serializer.toByteArrayInt(campo.getIntegerValue()));
-						primeiroVary += 4;
-						
-						if(flagNullPositionInt == 1) {
-							bufferCampoFixo.write(Serializer.toByteArrayInt(0));
-							primeiroVary += 4;
-						}
-						if(flagNullPositionChar == 1) {
-							int iterator = 0;
-							while(iterator < novoMetadado.getQuantidadeBool()) {
-								bufferCampoFixo.write(Serializer.toByteArrayChar("0"));
-								iterator++;
-							}
-							primeiroVary += campo.getCharValue().length();
-						}
-						if(flagNullPositionBool == 1) {
-							
-						}
-					}
-					else if(tipo.equals("BOOLEAN")){
-						bufferCampoFixo.write(Serializer.toByteArrayBool(campo.getBooleanValue()));
-						primeiroVary += 1;
-						
-						if(flagNullPositionVar == 1) {
-							bufferCampoFixo.write(Serializer.toByteArrayBool(campo.getBooleanValue()));
-							primeiroVary += 1;
-						}
-					} 
-					else if(tipo.equals("CHAR")){
-						campo.setTamanho(campo.getCharValue().length());
-						bufferCampoFixo.write(Serializer.toByteArrayChar(campo.getCharValue()));
-						primeiroVary += campo.getCharValue().length();
-						
-						if(flagNullPositionVar == 1) {
-							bufferCampoFixo.write(Serializer.toByteArrayChar(campo.getCharValue()));
-							primeiroVary += campo.getCharValue().length();
-						}
-					}
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				camposInsert.add(campo);
-				i++;
-			}*/
 			
 			insert.setListaContents(camposInsert);
 			
@@ -251,13 +162,50 @@ public class GerenciadorInsert {
 				e.printStackTrace();
 			}
 			
-			if(bitmap != 0 && campoMeta.length == campoValues.length) {
+			if(bitmap != 0 && campoMeta.length == campoValues.length && flag != 1) {
 				insert.setListaContentsSerialized(bufferCampos.toByteArray());
 				listaInsert.add(insert);
 				insertSucesso++;
 			}
+			flag = 0;
 		}
 		return listaInsert;
+	}
+
+	private String[] retiraEspacos(String[] campoValuesWithSpace) {
+		int i = 0;
+		String[] novo = new String[campoValuesWithSpace.length];
+		int j = 0;
+		for(String s : campoValuesWithSpace) {
+			String temp = "";
+			for(i = 0 ; i < s.length() ; i++ ) {
+				if(s.charAt(0) == ' ' && s.charAt(s.length()-1) == ' ') {
+					temp = temp.concat(s.substring(1, s.length()-1));
+					novo[j] = temp;
+					temp = new String();
+					i = s.length();
+				}
+				else if(s.charAt(0) == ' ' && i == 0 ) {
+					temp = temp.concat(s.substring(1, s.length()));
+					novo[j] = temp;
+					temp = new String();
+					i = s.length();
+				}
+				else if(s.charAt(i) == ' ' && i == s.length()-1) {
+					temp = temp.concat(s.substring(0, s.length()-1));
+					novo[j] = temp;
+					temp = new String();
+					i = s.length();
+				}
+				else {
+					temp = temp.concat(s);
+					novo[j] = temp;
+					temp = new String();
+				}
+				j++;
+			}
+		}
+		return novo;
 	}
 
 	private boolean[] getBynaryArry(int bitmap, int qtCampos) {
@@ -276,10 +224,20 @@ public class GerenciadorInsert {
 	}
 
 	private String[] retiraNomeTable(String[] campoMetaExtraido) {
-		String[] retorno = new String[campoMetaExtraido.length-1];
+		int contaNulos = 0;
+		for(String s : campoMetaExtraido){
+			if(s.equals("") || s.equals(" ")) {
+				contaNulos++;
+			}
+		}
+		String[] retorno = new String[campoMetaExtraido.length-(1 + contaNulos)];
 		int i = 0;
-		for(i = 0; i <retorno.length ; i++) {
-			retorno[i] = campoMetaExtraido[i+1];
+		int j = 0;
+		for(i = 1; i < campoMetaExtraido.length ; i++) {
+			if(!campoMetaExtraido[i].equals("")) {
+				retorno[j] = campoMetaExtraido[i];
+				j++;
+			}
 		}
 		return retorno;
 	}
@@ -354,7 +312,7 @@ public class GerenciadorInsert {
 		//Insert insert;
 		while(i < arquivoRecuperado.getCabecalho().getRegistros()) {
 			Insert insert = new Insert();
-			Offset offset = arquivoRecuperado.getCabecalho().getDeslocamentoArquivos().removeFirst();
+			Offset offset = arquivoRecuperado.getCabecalho().getDeslocamentoArquivos().get(i);
 			insert.setListaContentsSerialized(getRegistroSerializado(offset.getOffiset(), arquivoRecuperado.getContent(), posicaoFinal));
 			posicaoFinal = offset.getOffiset();
 			LinkedList<Campo> listaCampos = insert.deserializeContents(metadado);
@@ -362,6 +320,7 @@ public class GerenciadorInsert {
 			listaRetorno.add(insert);
 			i++;
 		}
+		arquivoRecuperado.setRegistros(i);
 		return listaRetorno;
 	}
 	
